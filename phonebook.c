@@ -8,8 +8,8 @@
 MODULE_AUTHOR("Krasin Vyacheslav");
 MODULE_LICENSE("GPL");
 		
-int scull_minor = 0;
-int scull_major = 0;	
+int phonebook_minor = 0;
+int phonebook_major = 0;	
 
 struct char_device {
 	char data[100];
@@ -17,90 +17,90 @@ struct char_device {
 
 struct cdev *p_cdev;
 
-ssize_t scull_read(struct file *flip, char __user *buf, size_t count,
+ssize_t phonebook_read(struct file *flip, char __user *buf, size_t count,
 				loff_t *f_pos)
 {
 	int rv;
 
-	printk(KERN_INFO "scull: read from device\n");
+	printk(KERN_INFO "phonebook: read from device\n");
 
 	rv = copy_to_user(buf, device.data, count);
 
 	return rv;
 }
 
-ssize_t scull_write(struct file *flip, const char __user *buf, size_t count,
+ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 				loff_t *f_pos)
 {
 	int rv;
 
-	printk(KERN_INFO "scull: write to device\n");
+	printk(KERN_INFO "phonebook: write to device\n");
 
 	rv = copy_from_user(device.data, buf, count);
 
 	return rv;
 }
 
-int scull_open(struct inode *inode, struct file *flip)
+int phonebook_open(struct inode *inode, struct file *flip)
 {
-	printk(KERN_INFO "scull: device is opend\n");
+	printk(KERN_INFO "phonebook: device is opend\n");
 
 	return 0;
 }
 
-int scull_release(struct inode *inode, struct file *flip)
+int phonebook_release(struct inode *inode, struct file *flip)
 {
-	printk(KERN_INFO "scull: device is closed\n");
+	printk(KERN_INFO "phonebook: device is closed\n");
 
 	return 0;
 }
 
-struct file_operations scull_fops = {		
+struct file_operations phonebook_fops = {		
 	.owner = THIS_MODULE,			
-	.read = scull_read,
-	.write = scull_write,
-	.open = scull_open,
-	.release = scull_release,
+	.read = phonebook_read,
+	.write = phonebook_write,
+	.open = phonebook_open,
+	.release = phonebook_release,
 };
 
-void scull_cleanup_module(void)
+void phonebook_cleanup_module(void)
 {
-	dev_t devno = MKDEV(scull_major, scull_minor);
+	dev_t devno = MKDEV(phonebook_major, phonebook_minor);
 
 	cdev_del(p_cdev);
 
 	unregister_chrdev_region(devno, 1); 
 }
 
-static int scull_init_module(void)
+static int phonebook_init_module(void)
 {
 	int rv;
 	dev_t dev;
 
-	rv = alloc_chrdev_region(&dev, scull_minor, 1, "scull");	
+	rv = alloc_chrdev_region(&dev, phonebook_minor, 1, "phonebook");	
 
 	if (rv) {
-		printk(KERN_WARNING "scull: can't get major %d\n", scull_major);
+		printk(KERN_WARNING "phonebook: can't get major %d\n", phonebook_major);
 		return rv;
 	}
 
-	scull_major = MAJOR(dev);
+	phonebook_major = MAJOR(dev);
 
 	p_cdev = cdev_alloc();
-	cdev_init(p_cdev, &scull_fops);
+	cdev_init(p_cdev, &phonebook_fops);
 
 	p_cdev->owner = THIS_MODULE;
-	p_cdev->ops = &scull_fops;
+	p_cdev->ops = &phonebook_fops;
 
 	rv = cdev_add(p_cdev, dev, 1);
 
 	if (rv)
-		printk(KERN_NOTICE "Error %d adding scull", rv);
+		printk(KERN_NOTICE "Error %d adding phonebook", rv);
 
-	printk(KERN_INFO "scull: register device major = %d minor = %d\n", scull_major, scull_minor);
+	printk(KERN_INFO "phonebook: register device major = %d minor = %d\n", phonebook_major, phonebook_minor);
 
 	return 0;
 }
 
-module_init(scull_init_module);
-module_exit(scull_cleanup_module);
+module_init(phonebook_init_module);
+module_exit(phonebook_cleanup_module);
