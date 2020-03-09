@@ -4,6 +4,8 @@
 #include <linux/cdev.h>
 #include <linux/semaphore.h>
 #include <linux/uaccess.h>
+#include <linux/string.h>
+
 
 MODULE_AUTHOR("Krasin Vyacheslav");
 MODULE_LICENSE("GPL");
@@ -11,10 +13,32 @@ MODULE_LICENSE("GPL");
 int phonebook_minor = 0;
 int phonebook_major = 0;	
 
-struct char_device {
+struct scull_device {
 	char data[100];
-} device;
+	size_t size;
+} ;
+char data_buf[100];
+struct user_type {
+	char first_name[100];
+	//char last_name[100];
+	//unsigned age;
+	//char number[10];
+	//char email[100];
+};
 
+struct user_base_type{
+	struct user_type *user;
+	size_t num_user;
+} ;
+struct user_base_type *user_base = &(struct user_base_type){.user = NULL, . num_user = 0};
+
+
+enum Command_type {
+	CREATE,
+	FIND,
+	DELETE,
+	NOTH
+};
 struct cdev *p_cdev;
 
 ssize_t phonebook_read(struct file *flip, char __user *buf, size_t count,
@@ -24,7 +48,9 @@ ssize_t phonebook_read(struct file *flip, char __user *buf, size_t count,
 
 	printk(KERN_INFO "phonebook: read from device\n");
 
-	rv = copy_to_user(buf, device.data, count);
+	rv = copy_to_user(buf,data_buf, count);	
+	
+	printk(KERN_INFO "phonebook str: %s\n" , data_buf);
 
 	return rv;
 }
@@ -33,12 +59,48 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 				loff_t *f_pos)
 {
 	int rv;
+	char  *token ;
+	char *tmp;
+	struct user_base_type *tmp_user_base;
+	enum Command_type command =NOTH ;
+	//struct scull_device *data = (struct scull_device *) flip->private_data;
+	ssize_t len = count;//min(data->size - *f_pos,count);
 
 	printk(KERN_INFO "phonebook: write to device\n");
-
-	rv = copy_from_user(device.data, buf, count);
-
-	return rv;
+	
+	
+	rv =  copy_from_user(data_buf, buf, count);
+	printk(KERN_INFO "phonebook read: %i\n" , (int)rv);
+	printk(KERN_INFO "phonebook str: %s" , data_buf);
+	printk(KERN_INFO "phonebook: +++++");
+	tmp = vmalloc(count-1);
+	memcpy(tmp, data_buf, count-1);
+	do {
+		printk(KERN_INFO "phonebook: -----");
+		printk(KERN_INFO "phonebook token: %s\n", token);
+		token = strsep(&tmp, " ");
+		if (token){
+			if (command == CREATE)
+				printk(KERN_INFO "phonebook create: ok");
+				
+				
+			if (strcmp(token, "create") == 0)
+				command = CREATE;
+				user_base->num_user = user_base->num_user + 1;
+				tmp_user_base = vmalloc((user_base->num_user)* sizeof(struct user_type));
+				memcpy(tmp_user_base, user_base, user_base->num_user * sizeof(struct user_type));	
+				
+				printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base->num_user);
+				vfree(tmp_user_base);
+			//printk(KERN_INFO "phonebook compare: %i\n", strcmp(token, "create"));
+			
+		}
+	}while (token);
+	
+	vfree(tmp);
+	printk(KERN_INFO "phonebook size user_base: %li\n", sizeof(user_base));
+	//*f_pos += len;   
+	return len;
 }
 
 int phonebook_open(struct inode *inode, struct file *flip)
