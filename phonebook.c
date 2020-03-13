@@ -20,7 +20,7 @@ struct scull_device {
 char data_buf[100];
 struct user_type {
 	char first_name[100];
-	//char last_name[100];
+	char last_name[100];
 	//unsigned age;
 	//char number[10];
 	//char email[100];
@@ -62,6 +62,11 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 	char  *token ;
 	char *tmp;
 	struct user_base_type *tmp_user_base;
+	
+	char *str = "string example";
+	char buf2[32];
+	
+	struct user_type *tmp_user = vmalloc(sizeof(struct user_type));
 	enum Command_type command =NOTH ;
 	//struct scull_device *data = (struct scull_device *) flip->private_data;
 	ssize_t len = count;//min(data->size - *f_pos,count);
@@ -75,30 +80,45 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 	printk(KERN_INFO "phonebook: +++++");
 	tmp = vmalloc(count-1);
 	memcpy(tmp, data_buf, count-1);
+	command = NOTH;
 	do {
-		printk(KERN_INFO "phonebook: -----");
-		printk(KERN_INFO "phonebook token: %s\n", token);
+		//printk(KERN_INFO "phonebook: -----");
+		
 		token = strsep(&tmp, " ");
+		//printk(KERN_INFO "phonebook token: %s\n", token);
 		if (token){
-			if (command == CREATE)
-				printk(KERN_INFO "phonebook create: ok");
+			if (command == CREATE){
+				if (tmp_user->first_name[0] == '\0')
+					strcpy(tmp_user->first_name, token);
+				else if (tmp_user->last_name[0] == '\0'){
+					strcpy(tmp_user->last_name, token);
 				
-				
+					user_base->num_user = user_base->num_user + 1;
+					tmp_user_base = vmalloc((user_base->num_user)* sizeof(struct user_type));
+					memcpy(tmp_user_base, user_base, user_base->num_user * sizeof(struct user_type));	
+					vfree(tmp_user_base);
+					printk(KERN_INFO "phonebook user_base: %s\n", &(user_base->user));
+					
+				}
+			}			
+							
 			if (strcmp(token, "create") == 0)
 				command = CREATE;
-				user_base->num_user = user_base->num_user + 1;
-				tmp_user_base = vmalloc((user_base->num_user)* sizeof(struct user_type));
-				memcpy(tmp_user_base, user_base, user_base->num_user * sizeof(struct user_type));	
 				
-				printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base->num_user);
-				vfree(tmp_user_base);
+				
+				
+				
 			//printk(KERN_INFO "phonebook compare: %i\n", strcmp(token, "create"));
 			
 		}
 	}while (token);
+	printk(KERN_INFO "phonebook tmp_user: %s\n", tmp_user->first_name);
+	printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base->num_user);
+	printk(KERN_INFO "phonebook user_base: %p\n", user_base->user);
+	
 	
 	vfree(tmp);
-	printk(KERN_INFO "phonebook size user_base: %li\n", sizeof(user_base));
+	//printk(KERN_INFO "phonebook size user_base->num_user: %li\n", user_base->num_user);
 	//*f_pos += len;   
 	return len;
 }
