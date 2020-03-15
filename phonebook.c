@@ -30,8 +30,7 @@ struct user_base_type{
 	struct user_type *user;
 	size_t num_user;
 } ;
-struct user_base_type *user_base = &(struct user_base_type){.user = NULL, . num_user = 0};
-
+struct user_base_type user_base;
 
 enum Command_type {
 	CREATE,
@@ -61,12 +60,9 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 	int rv;
 	char  *token ;
 	char *tmp;
-	struct user_base_type *tmp_user_base;
-	
-	char *str = "string example";
-	char buf2[32];
-	
+	struct user_base_type tmp_user_base;	
 	struct user_type *tmp_user = vmalloc(sizeof(struct user_type));
+	
 	enum Command_type command =NOTH ;
 	//struct scull_device *data = (struct scull_device *) flip->private_data;
 	ssize_t len = count;//min(data->size - *f_pos,count);
@@ -91,13 +87,13 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 				if (tmp_user->first_name[0] == '\0')
 					strcpy(tmp_user->first_name, token);
 				else if (tmp_user->last_name[0] == '\0'){
-					strcpy(tmp_user->last_name, token);
-				
-					user_base->num_user = user_base->num_user + 1;
-					tmp_user_base = vmalloc((user_base->num_user)* sizeof(struct user_type));
-					memcpy(tmp_user_base, user_base, user_base->num_user * sizeof(struct user_type));	
-					vfree(tmp_user_base);
-					printk(KERN_INFO "phonebook user_base: %s\n", &(user_base->user));
+					strcpy(tmp_user->last_name, token);	
+			
+					user_base.num_user = user_base.num_user + 1;	
+					user_base.user = vmalloc(user_base.num_user);
+					
+					memcpy(&(user_base.user[0]), tmp_user, sizeof(struct user_base_type));					
+					printk(KERN_INFO "phonebook user_base work: %s\n", (user_base.user[0].first_name));
 					
 				}
 			}			
@@ -112,9 +108,8 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 			
 		}
 	}while (token);
-	printk(KERN_INFO "phonebook tmp_user: %s\n", tmp_user->first_name);
-	printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base->num_user);
-	printk(KERN_INFO "phonebook user_base: %p\n", user_base->user);
+	printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base.num_user);
+	printk(KERN_INFO "phonebook user_base: %p\n", user_base.user);
 	
 	
 	vfree(tmp);
