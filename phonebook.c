@@ -58,9 +58,10 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 				loff_t *f_pos)
 {
 	int rv;
+	int i;
 	char  *token ;
 	char *tmp;
-	struct user_base_type tmp_user_base;	
+	struct user_type  *tmp_user_base;	
 	struct user_type *tmp_user = vmalloc(sizeof(struct user_type));
 	
 	enum Command_type command =NOTH ;
@@ -71,8 +72,7 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 	
 	
 	rv =  copy_from_user(data_buf, buf, count);
-	printk(KERN_INFO "phonebook read: %i\n" , (int)rv);
-	printk(KERN_INFO "phonebook str: %s" , data_buf);
+	printk(KERN_INFO "phonebook data_buf: %s",data_buf);
 	printk(KERN_INFO "phonebook: +++++");
 	tmp = vmalloc(count-1);
 	memcpy(tmp, data_buf, count-1);
@@ -83,23 +83,42 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 		token = strsep(&tmp, " ");
 		//printk(KERN_INFO "phonebook token: %s\n", token);
 		if (token){
-			if (command == CREATE){
+			if (command == CREATE)
+			{
+				printk(KERN_INFO "phonebook: CREATE");
 				if (tmp_user->first_name[0] == '\0')
 					strcpy(tmp_user->first_name, token);
-				else if (tmp_user->last_name[0] == '\0'){
-					strcpy(tmp_user->last_name, token);	
-			
-					user_base.num_user = user_base.num_user + 1;	
-					user_base.user = vmalloc(user_base.num_user);
+				else if (tmp_user->last_name[0] == '\0')
+				{
+					strcpy(tmp_user->last_name, token);					
+
+					tmp_user_base = vmalloc((user_base.num_user +1)* sizeof(struct user_type ));
+					vfree(user_base.user );
+					user_base.num_user = user_base.num_user + 1;
+					user_base.user = tmp_user_base;
 					
-					memcpy(&(user_base.user[0]), tmp_user, sizeof(struct user_base_type));					
-					printk(KERN_INFO "phonebook user_base work: %s\n", (user_base.user[0].first_name));
-					
+					memcpy(&(user_base.user[user_base.num_user]), tmp_user, sizeof(struct user_base_type));					
+					printk(KERN_INFO "phonebook user_base work: %s\n", (user_base.user[user_base.num_user].first_name));
+					command = NOTH;
 				}
-			}			
+				
+			}
+			if (command == FIND)
+			{
+				printk(KERN_INFO "phonebook: FIND");
+				printk(KERN_INFO "phonebook token: %s\n", token);
+				for (i = 0; i <= user_base.num_user; i++)
+				{
+					if (strcmp(user_base.user[i].first_name, token) == 0)
+						printk(KERN_INFO "phonebook: FIND user");
+						//rv = copy_to_user(buf,data_buf, count);
+				}
+			}
 							
 			if (strcmp(token, "create") == 0)
 				command = CREATE;
+			if (strcmp(token, "find") == 0)
+				command = FIND;
 				
 				
 				
@@ -108,8 +127,8 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 			
 		}
 	}while (token);
-	printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base.num_user);
-	printk(KERN_INFO "phonebook user_base: %p\n", user_base.user);
+	//printk(KERN_INFO "phonebook num_user: %i\n" , (int)user_base.num_user);
+	//printk(KERN_INFO "phonebook user_base: %p\n", user_base.user);
 	
 	
 	vfree(tmp);
