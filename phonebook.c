@@ -59,6 +59,7 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 {
 	int rv;
 	int i;
+	int user_i;
 	char  *token ;
 	char *tmp;
 	struct user_type  *tmp_user_base;	
@@ -94,11 +95,11 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 
 					tmp_user_base = vmalloc((user_base.num_user +1)* sizeof(struct user_type ));
 					vfree(user_base.user );
-					user_base.num_user = user_base.num_user + 1;
-					user_base.user = tmp_user_base;
+					user_base.user = tmp_user_base;					
+					memcpy(&(user_base.user[user_base.num_user]), tmp_user, sizeof(struct user_base_type));		
 					
-					memcpy(&(user_base.user[user_base.num_user]), tmp_user, sizeof(struct user_base_type));					
 					printk(KERN_INFO "phonebook user_base work: %s\n", (user_base.user[user_base.num_user].first_name));
+					user_base.num_user = user_base.num_user + 1;
 					command = NOTH;
 				}
 				
@@ -106,23 +107,27 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 			if (command == FIND)
 			{
 				printk(KERN_INFO "phonebook: FIND");
-				printk(KERN_INFO "phonebook token: %s\n", token);
+				//printk(KERN_INFO "phonebook token: %s\n", token);
 				for (i = 0; i <= user_base.num_user; i++)
-				{
+				{	
 					if (strcmp(user_base.user[i].first_name, token) == 0)
+					{
 						printk(KERN_INFO "phonebook: FIND user");
-						//rv = copy_to_user(buf,data_buf, count);
+						user_i = i;
+					}
 				}
+				if (user_i > 0 )
+					printk(KERN_INFO "phonebook find user: %s\n", (user_base.user[user_i].first_name));
 			}
 							
 			if (strcmp(token, "create") == 0)
 				command = CREATE;
 			if (strcmp(token, "find") == 0)
 				command = FIND;
-				
-				
-				
-				
+			if (strcmp(token, "delete") == 0)
+				command = DELETE;
+			user_i = -1;		
+
 			//printk(KERN_INFO "phonebook compare: %i\n", strcmp(token, "create"));
 			
 		}
