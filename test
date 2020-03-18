@@ -1,0 +1,11 @@
+#!/bin/bash
+make
+./end
+./start
+echo create vasya one > /dev/phonebook
+echo create ivan two > /dev/phonebook
+echo create petya three > /dev/phonebook
+echo find vasya > /dev/phonebook
+echo delete petya > /dev/phonebook
+
+dmesg

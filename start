@@ -1,0 +1,4 @@
+#!/bin/bash
+sudo insmod phonebook.ko
+sudo mknod /dev/phonebook c 241 0
+sudo chmod 777 /dev/phonebook

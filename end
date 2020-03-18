@@ -1,0 +1,3 @@
+#!/bin/bash
+sudo rmmod phonebook.ko
+sudo rm /dev/phonebook
