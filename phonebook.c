@@ -86,7 +86,6 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 		if (token){
 			if (command == CREATE)
 			{
-				printk(KERN_INFO "phonebook: CREATE");
 				if (tmp_user->first_name[0] == '\0')
 					strcpy(tmp_user->first_name, token);
 				else if (tmp_user->last_name[0] == '\0')
@@ -94,32 +93,50 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 					strcpy(tmp_user->last_name, token);					
 
 					tmp_user_base = vmalloc((user_base.num_user +1)* sizeof(struct user_type ));
+					memcpy(tmp_user_base, user_base.user, (user_base.num_user )* sizeof(struct user_type ));
 					vfree(user_base.user );
 					user_base.user = tmp_user_base;					
 					memcpy(&(user_base.user[user_base.num_user]), tmp_user, sizeof(struct user_base_type));		
 					
-					printk(KERN_INFO "phonebook user_base work: %s\n", (user_base.user[user_base.num_user].first_name));
+					//printk(KERN_INFO "phonebook create user: %s\n", (user_base.user[user_base.num_user].first_name));
 					user_base.num_user = user_base.num_user + 1;
 					command = NOTH;
 				}
 				
 			}
+			
 			if (command == FIND)
 			{
-				printk(KERN_INFO "phonebook: FIND");
-				//printk(KERN_INFO "phonebook token: %s\n", token);
 				for (i = 0; i <= user_base.num_user; i++)
 				{	
 					if (strcmp(user_base.user[i].first_name, token) == 0)
-					{
-						printk(KERN_INFO "phonebook: FIND user");
 						user_i = i;
-					}
 				}
-				if (user_i > 0 )
+				if (user_i >= 0 )
 					printk(KERN_INFO "phonebook find user: %s\n", (user_base.user[user_i].first_name));
 			}
-							
+			
+			if (command == DELETE)
+			{
+				for (i = 0; i <= user_base.num_user; i++)
+				{	
+					if (strcmp(user_base.user[i].first_name, token) == 0)
+						user_i = i;
+				}
+				printk(KERN_INFO "phonebook user: %i\n",  ( user_base.num_user));
+				printk(KERN_INFO "phonebook user i: %i\n",  ( user_i));
+				printk(KERN_INFO "phonebook raz: %i\n",  ( user_base.num_user -1  - user_i));
+				if (user_i >= 0 )
+				{
+					printk(KERN_INFO "phonebook delete user: %s\n", (user_base.user[user_i].first_name));
+					tmp_user_base = vmalloc((user_i+1)* sizeof(struct user_type ));
+					memcpy(tmp_user_base, user_base.user, (user_i)* sizeof(struct user_type ));					
+					memcpy(tmp_user_base+user_i, user_base.user+user_i+1, ( user_base.num_user -1 - user_i)* sizeof(struct user_type ));
+					vfree(user_base.user);
+					user_base.user = tmp_user_base;
+					user_base.num_user = user_base.num_user -1;
+				}
+			}				
 			if (strcmp(token, "create") == 0)
 				command = CREATE;
 			if (strcmp(token, "find") == 0)
