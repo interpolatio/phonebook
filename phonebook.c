@@ -21,9 +21,9 @@ char data_buf[100];
 struct user_type {
 	char first_name[100];
 	char last_name[100];
-	//unsigned age;
-	//char number[10];
-	//char email[100];
+	unsigned age;
+	char number[12];
+	char email[100];
 };
 
 struct user_type tmp_user; 
@@ -87,20 +87,31 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 		//printk(KERN_INFO "phonebook token: %s\n", token);
 		if (token){
 			if (command == CREATE)
-			{
+			{printk(KERN_INFO "phonebook token user: %s\n", token);
 				if (tmp_user.first_name[0] == '\0')
 					strcpy(tmp_user.first_name, token);
-				else if (tmp_user.last_name[0] == '\0')
+				else if (tmp_user.last_name[0] == '\0')				
+					strcpy(tmp_user.last_name, token);	
+				else if (tmp_user.age == 0)
+				{//printk(KERN_INFO "phonebook create age");
+			tmp_user.age=1;
+					//kstrtoll_from_user(token, strlen(token),  10, tmp_user.age);
+				}
+				else if (tmp_user.number[0] == '\0')	
+				{printk(KERN_INFO "phonebook create number");
+					strcpy(tmp_user.number, token);	
+				}
+				else if (tmp_user.email[0] == '\0')	
 				{
-					strcpy(tmp_user.last_name, token);					
-
+					strcpy(tmp_user.email, token);	
+				
 					tmp_user_base = vmalloc((user_base.num_user +1)* sizeof(struct user_type ));
 					memcpy(tmp_user_base, user_base.user, (user_base.num_user )* sizeof(struct user_type ));
 					vfree(user_base.user );
 					user_base.user = tmp_user_base;					
 					memcpy(&(user_base.user[user_base.num_user]), &tmp_user, sizeof(struct user_base_type));		
 					
-					//printk(KERN_INFO "phonebook create user: %s\n", (user_base.user[user_base.num_user].first_name));
+					printk(KERN_INFO "phonebook create user: %s\n", (user_base.user[user_base.num_user].last_name));
 					user_base.num_user = user_base.num_user + 1;
 					command = NOTH;
 				}
@@ -109,15 +120,21 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 			
 			if (command == FIND)
 			{
-				for (i = 0; i <= user_base.num_user; i++)
-				{	
+				printk(KERN_INFO "phonebook: FIND"); 
+				printk(KERN_INFO "phonebook find  user_base.num_user: %i\n",   user_base.num_user);
+				for (i = 0; i < user_base.num_user; i++)
+				{	printk(KERN_INFO "phonebook check: %s\n", (user_base.user[user_i].first_name));
+					printk(KERN_INFO "phonebook check token: %s\n", (token));
 					if (strcmp(user_base.user[i].first_name, token) == 0)
 						user_i = i;
 				}
+				printk(KERN_INFO "phonebook find user age: %i\n",  user_i);
 				if (user_i >= 0 )
 				{
-					memcpy(&tmp_user,  (user_base.user[user_i].first_name), sizeof(struct user_base_type));		
-					printk(KERN_INFO "phonebook find user: %s\n", (user_base.user[user_i].first_name));
+					//memcpy(&tmp_user,  (user_base.user[user_i].first_name), sizeof(struct user_base_type));		
+					printk(KERN_INFO "phonebook find user first_name: %s\n", (user_base.user[user_i].first_name));
+					printk(KERN_INFO "phonebook find user last_name: %s\n", (user_base.user[user_i].last_name));
+					printk(KERN_INFO "phonebook find user age: %i\n", (user_base.user[user_i].age));
 				}
 			}
 			
@@ -140,7 +157,7 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 				}
 			}				
 			if (strcmp(token, "create") == 0)
-				command = CREATE;
+				command = CREATE;				
 			if (strcmp(token, "find") == 0)
 				command = FIND;
 			if (strcmp(token, "delete") == 0)
