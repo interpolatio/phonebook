@@ -26,6 +26,8 @@ struct user_type {
 	//char email[100];
 };
 
+struct user_type tmp_user; 
+
 struct user_base_type{
 	struct user_type *user;
 	size_t num_user;
@@ -47,9 +49,9 @@ ssize_t phonebook_read(struct file *flip, char __user *buf, size_t count,
 
 	printk(KERN_INFO "phonebook: read from device\n");
 
-	rv = copy_to_user(buf,data_buf, count);	
+	rv = copy_to_user(buf, &tmp_user.first_name, count);	
 	
-	printk(KERN_INFO "phonebook str: %s\n" , data_buf);
+	printk(KERN_INFO "phonebook str: %s\n" , buf);
 
 	return rv;
 }
@@ -63,7 +65,7 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 	char  *token ;
 	char *tmp;
 	struct user_type  *tmp_user_base;	
-	struct user_type *tmp_user = vmalloc(sizeof(struct user_type));
+	
 	
 	enum Command_type command =NOTH ;
 	//struct scull_device *data = (struct scull_device *) flip->private_data;
@@ -86,17 +88,17 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 		if (token){
 			if (command == CREATE)
 			{
-				if (tmp_user->first_name[0] == '\0')
-					strcpy(tmp_user->first_name, token);
-				else if (tmp_user->last_name[0] == '\0')
+				if (tmp_user.first_name[0] == '\0')
+					strcpy(tmp_user.first_name, token);
+				else if (tmp_user.last_name[0] == '\0')
 				{
-					strcpy(tmp_user->last_name, token);					
+					strcpy(tmp_user.last_name, token);					
 
 					tmp_user_base = vmalloc((user_base.num_user +1)* sizeof(struct user_type ));
 					memcpy(tmp_user_base, user_base.user, (user_base.num_user )* sizeof(struct user_type ));
 					vfree(user_base.user );
 					user_base.user = tmp_user_base;					
-					memcpy(&(user_base.user[user_base.num_user]), tmp_user, sizeof(struct user_base_type));		
+					memcpy(&(user_base.user[user_base.num_user]), &tmp_user, sizeof(struct user_base_type));		
 					
 					//printk(KERN_INFO "phonebook create user: %s\n", (user_base.user[user_base.num_user].first_name));
 					user_base.num_user = user_base.num_user + 1;
@@ -113,7 +115,10 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 						user_i = i;
 				}
 				if (user_i >= 0 )
+				{
+					memcpy(&tmp_user,  (user_base.user[user_i].first_name), sizeof(struct user_base_type));		
 					printk(KERN_INFO "phonebook find user: %s\n", (user_base.user[user_i].first_name));
+				}
 			}
 			
 			if (command == DELETE)
@@ -123,9 +128,6 @@ ssize_t phonebook_write(struct file *flip, const char __user *buf, size_t count,
 					if (strcmp(user_base.user[i].first_name, token) == 0)
 						user_i = i;
 				}
-				printk(KERN_INFO "phonebook user: %i\n",  ( user_base.num_user));
-				printk(KERN_INFO "phonebook user i: %i\n",  ( user_i));
-				printk(KERN_INFO "phonebook raz: %i\n",  ( user_base.num_user -1  - user_i));
 				if (user_i >= 0 )
 				{
 					printk(KERN_INFO "phonebook delete user: %s\n", (user_base.user[user_i].first_name));
