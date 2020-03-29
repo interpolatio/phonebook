@@ -2,9 +2,9 @@
 make
 ./end
 ./start
-echo create vasya one > /dev/phonebook
-echo create ivan two > /dev/phonebook
-echo create petya three > /dev/phonebook
+echo create vasya one 16 +79998257415 vasya.one@gmail.com> /dev/phonebook
+echo create ivan two 20 +78958462585 ivan.two@yandex.ru> /dev/phonebook
+echo create petya three 30 +79853458952 petya.three@gmail.com> /dev/phonebook
 echo find vasya > /dev/phonebook
 echo delete petya > /dev/phonebook
 
