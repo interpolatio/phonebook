@@ -5,6 +5,7 @@
 #include <linux/semaphore.h>
 #include <linux/uaccess.h>
 #include <linux/string.h>
+#include <linux/vmalloc.h>
 
 
 MODULE_AUTHOR("Krasin Vyacheslav");
